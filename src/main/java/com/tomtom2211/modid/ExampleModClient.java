@@ -11,28 +11,31 @@ import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 public class ExampleModClient implements ClientModInitializer {
+
     static boolean enabled = false;
+    static double counter = 0;
+
     @Override
     public void onInitializeClient() {
-        KeyBinding ToggleSprint = KeyBindingHelper.registerKeyBinding(new KeyBinding("Toggle sprint", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_H, "tomtom2211 mod"));
+        KeyBinding sneakCounter = KeyBindingHelper.registerKeyBinding(new KeyBinding("Toggle sneak counter", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_L, "tomtom2211"));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null) return;
-
-            // Toggling logic
-            if (ToggleSprint.wasPressed()) {
+            if (sneakCounter.wasPressed() && client.player != null){
                 enabled = !enabled;
-                client.player.sendMessage(Text.of(enabled ? "Sprinting ON" : "Sprinting OFF"), true);
+                counter = 0;
+                client.player.sendMessage(Text.of(enabled? "Counter enabled!":"Counter disabled!"), true);
             }
-
-            // Apply sprint state every tick if enabled
-            if (enabled) {
-                client.player.setSprinting(true);
+            if (client.player != null && enabled){
+                if (client.player.isSneaking()) {
+                    counter++;
+                }
             }
         });
-        HudRenderCallback.EVENT.register((context, tickDelta) -> {
+        HudRenderCallback.EVENT.register((context, tickCounter) -> {
+            Double sneakTime = counter / 20;
+            String sneakTimeString = String.format("%.1f", sneakTime);
             MinecraftClient client = MinecraftClient.getInstance();
-            if (enabled){
-                context.drawText(client.textRenderer, "Sprinting enabled", 1,1,0xFFFFFFFF, true);
+            if(enabled) {
+                context.drawText(client.textRenderer, sneakTimeString + " s", 1, 1, 0xFFFFFFFF, false);
             }
         });
     }
